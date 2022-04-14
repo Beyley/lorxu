@@ -26,4 +26,10 @@ public class Character {
 		
 		this.OnBitmapChange?.Invoke(this, EventArgs.Empty);
 	}
+
+	public void Resize(int width, int height) {
+		this.Bitmap = new Bitmap(this.Bitmap, width, height);
+		
+		this.OnBitmapResize?.Invoke(this, new Size(width, height));
+	}
 }

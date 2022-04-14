@@ -4,8 +4,8 @@ using System.Numerics;
 using Furball.Engine;
 using Furball.Engine.Engine.Graphics.Drawables;
 using Furball.Engine.Engine.Graphics.Drawables.Primitives;
+using Furball.Engine.Engine.Graphics.Drawables.UiElements;
 using Furball.Engine.Engine.Helpers;
-using Gtk;
 using Silk.NET.Input;
 using Color = Furball.Vixie.Backends.Shared.Color;
 
@@ -19,8 +19,12 @@ public class CharacterEditor : CompositeDrawable {
 
 	public Bindable<float> PixelSize = new(20f);
 	
-	public static readonly Color        LineColor = Color.LightGray;
-	private readonly       ColourPicker _colourPicker;
+	public static readonly Color            LineColor = Color.LightGray;
+	private readonly       ColourPicker     _colourPicker;
+	private readonly       UiButtonDrawable _sizeRight;
+	private readonly       UiButtonDrawable _sizeLeft;
+	private readonly       UiButtonDrawable _sizeUp;
+	private readonly       UiButtonDrawable _sizeDown;
 
 	public CharacterEditor(FontFamily font, FontType type, int codepoint) {
 		this._family = font;
@@ -32,6 +36,27 @@ public class CharacterEditor : CompositeDrawable {
 			OriginType = OriginType.TopCenter
 		};
 
+		this._sizeRight = new UiButtonDrawable(Vector2.Zero, "Width+", FurballGame.DEFAULT_FONT, 25, Color.Blue, Color.White, Color.Black, Vector2.Zero);
+		this._sizeLeft = new UiButtonDrawable(Vector2.Zero, "Width-", FurballGame.DEFAULT_FONT, 25, Color.Blue, Color.White, Color.Black, Vector2.Zero);
+		this._sizeUp = new UiButtonDrawable(Vector2.Zero, "Height-", FurballGame.DEFAULT_FONT, 25, Color.Blue, Color.White, Color.Black, Vector2.Zero);
+		this._sizeDown = new UiButtonDrawable(Vector2.Zero, "Height+", FurballGame.DEFAULT_FONT, 25, Color.Blue, Color.White, Color.Black, Vector2.Zero);
+		
+		this._sizeRight.OnClick += delegate {
+			this.CurrentCharacter.Value.Resize(this.CurrentCharacter.Value.Width + 1, this.CurrentCharacter.Value.Height);
+		};
+		
+		this._sizeLeft.OnClick += delegate {
+			this.CurrentCharacter.Value.Resize(this.CurrentCharacter.Value.Width - 1, this.CurrentCharacter.Value.Height);
+		};
+		
+		this._sizeUp.OnClick += delegate {
+			this.CurrentCharacter.Value.Resize(this.CurrentCharacter.Value.Width, this.CurrentCharacter.Value.Height - 1);
+		};
+		
+		this._sizeDown.OnClick += delegate {
+			this.CurrentCharacter.Value.Resize(this.CurrentCharacter.Value.Width, this.CurrentCharacter.Value.Height + 1);
+		};
+		
 		this.Resize(this, this.CurrentCharacter.Value.Size);
 		
 		this.CurrentCharacter.Value.OnBitmapResize += this.Resize;
@@ -44,7 +69,7 @@ public class CharacterEditor : CompositeDrawable {
 		
 		TexturedDrawable square;
 		for (int x = 0; x < this.CurrentCharacter.Value.Width; x++) {
-			for (int y = 0; y < this.CurrentCharacter.Value.Width; y++) {
+			for (int y = 0; y < this.CurrentCharacter.Value.Height; y++) {
 				System.Drawing.Color pxColor = this.CurrentCharacter.Value.Bitmap.GetPixel(x, y);
 				Color                color   = new(pxColor.R, pxColor.G, pxColor.B, pxColor.A);
 
@@ -83,6 +108,11 @@ public class CharacterEditor : CompositeDrawable {
 		
 		this.Drawables.Add(this._colourPicker);
 
+		this.Drawables.Add(this._sizeLeft);
+		this.Drawables.Add(this._sizeRight);
+		this.Drawables.Add(this._sizeUp);
+		this.Drawables.Add(this._sizeDown);
+
 		LinePrimitiveDrawable line;
 		for (int x = 0; x <= this.CurrentCharacter.Value.Width; x++) {
 			line = new LinePrimitiveDrawable(new(x * this.PixelSize, 0), new(x * this.PixelSize, this.CurrentCharacter.Value.Height * this.PixelSize), LineColor, 1f, false) {
@@ -101,6 +131,11 @@ public class CharacterEditor : CompositeDrawable {
 			this.Drawables.Add(line);
 		}
 
+		this._sizeLeft.Position  = new(this.CurrentCharacter.Value.Width * this.PixelSize + 10, 0);
+		this._sizeRight.Position = new(this.CurrentCharacter.Value.Width * this.PixelSize + 10, this._sizeLeft.Position.Y  + this._sizeLeft.Size.Y);
+		this._sizeUp.Position    = new(this.CurrentCharacter.Value.Width * this.PixelSize + 10, this._sizeRight.Position.Y + this._sizeRight.Size.Y);
+		this._sizeDown.Position  = new(this.CurrentCharacter.Value.Width * this.PixelSize + 10, this._sizeUp.Position.Y  + this._sizeUp.Size.Y);
+		
 		this._colourPicker.Position = new(this.PixelSize * this.CurrentCharacter.Value.Width / 2f, this.PixelSize * this.CurrentCharacter.Value.Height + 10);
 
 		this.Redraw(this, null);
